@@ -12,6 +12,13 @@ export default class AddTask extends Component {
                     onPress={this.props.onCancel}>
                     <View style={styles.background}></View>
                 </TouchableWithoutFeedback>
+                <View style={styles.container}>
+
+                </View>
+                <TouchableWithoutFeedback
+                    onPress={this.props.onCancel}>
+                    <View style={styles.background}></View>
+                </TouchableWithoutFeedback>
             </Modal>
         )
     }
@@ -21,5 +28,8 @@ const styles = StyleSheet.create({
     background:{
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)'
+    },
+    container:{
+        
     }
 })
