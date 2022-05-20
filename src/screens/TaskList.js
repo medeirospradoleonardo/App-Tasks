@@ -1,39 +1,35 @@
 import React, { Component } from 'react'
 import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Platform, Alert } from 'react-native'
 
-import commonStyles from '../commonStyles'
-import todayImage from '../../assets/imgs/today.jpg'
-
+import AsyncStorage from '@react-native-community/async-storage'
 import Icon from 'react-native-vector-icons/FontAwesome'
 
 import moment from 'moment'
 import 'moment/locale/pt-br'
 
+import commonStyles from '../commonStyles'
+import todayImage from '../../assets/imgs/today.jpg'
 import Task from '../components/Task'
 import AddTask from './AddTask'
 
+const initialState = {
+    showDoneTasks: true,
+    showAddTask: false,
+    visibleTasks: [],
+    tasks: []
+}
+
 export default class TaskList extends Component {
     state = {
-        showDoneTasks: true,
-        showAddTask: false,
-        visibleTasks: [],
-        tasks: [{
-            id: Math.random(),
-            desc: 'Comprar Livro de React Native',
-            estimateAt: new Date(),
-            doneAt: new Date()
-        },
-        {
-            id: Math.random(),
-            desc: 'Ler Livro de React Native',
-            estimateAt: new Date(),
-            doneAt: null
-        }]
+        ...initialState
     }
 
     // Sempre que o componente for montado a função filterTasks é chamada
-    componentDidMount = () => {
-        this.filterTasks()
+    componentDidMount = async () => {
+        const stateString = await AsyncStorage.getItem('tasksState')
+        // Caso o stateString não esteja válido (primeira vez usando), ele usa o estado inicial preestabelecido
+        const state = JSON.parse(stateString) || initialState
+        this.setState(state, this.filterTasks)
     }
 
     toggleFilter = () => {
@@ -43,21 +39,22 @@ export default class TaskList extends Component {
     filterTasks = () => {
         let visibleTasks = null
 
-        if(this.state.showDoneTasks){
+        if (this.state.showDoneTasks) {
             visibleTasks = [...this.state.tasks]
-        }else{
+        } else {
             // Função para ver se a task está pendente
             const pending = task => task.doneAt === null
             visibleTasks = this.state.tasks.filter(pending)
         }
 
         this.setState({ visibleTasks: visibleTasks })
+        AsyncStorage.setItem('tasksState', JSON.stringify(this.state))
     }
 
     toggleTask = taskId => {
         const tasks = [...this.state.tasks]
         tasks.forEach(task => {
-            if(task.id === taskId){
+            if (task.id === taskId) {
                 task.doneAt = task.doneAt ? null : new Date()
             }
         })
@@ -68,9 +65,9 @@ export default class TaskList extends Component {
     addTask = newTask => {
 
         // Isso ocorre se submeter se a descrição passado for nula, vazia ou com espaços em branco
-        if(!newTask.desc || !newTask.desc.trim()){
+        if (!newTask.desc || !newTask.desc.trim()) {
             Alert.alert('Dados inválidos', 'Descrição não informada!')
-            return 
+            return
         }
 
         const tasks = [...this.state.tasks]
@@ -94,14 +91,14 @@ export default class TaskList extends Component {
         const today = moment().locale('pt-br').format('ddd, D [de] MMMM')
         return (
             <View style={styles.container}>
-                <AddTask isVisible={this.state.showAddTask} 
+                <AddTask isVisible={this.state.showAddTask}
                     onCancel={() => this.setState({ showAddTask: false })}
                     onSave={this.addTask} />
-                <ImageBackground source={todayImage} 
+                <ImageBackground source={todayImage}
                     style={styles.background}>
                     <View style={styles.iconBar}>
                         <TouchableOpacity onPress={this.toggleFilter}>
-                            <Icon name={this.state.showDoneTasks ? 'eye' : 'eye-slash'} 
+                            <Icon name={this.state.showDoneTasks ? 'eye' : 'eye-slash'}
                                 size={20} color={commonStyles.colors.secondary} />
                         </TouchableOpacity>
                     </View>
@@ -113,12 +110,12 @@ export default class TaskList extends Component {
                 <View style={styles.taskList}>
                     <FlatList data={this.state.visibleTasks}
                         keyExtractor={item => `${item.id}`}
-                        renderItem={({item}) => <Task {...item} OnToggleTask={this.toggleTask} onDelete={this.deleteTask} />}/>
+                        renderItem={({ item }) => <Task {...item} OnToggleTask={this.toggleTask} onDelete={this.deleteTask} />} />
                 </View>
                 <TouchableOpacity style={styles.addButton}
                     activeOpacity={0.7}
                     onPress={() => this.setState({ showAddTask: true })}>
-                    <Icon name="plus" size={20} 
+                    <Icon name="plus" size={20}
                         color={commonStyles.colors.secondary} />
                 </TouchableOpacity>
             </View>
@@ -133,34 +130,34 @@ const styles = StyleSheet.create({
     background: {
         flex: 3
     },
-    taskList:{
+    taskList: {
         flex: 7
     },
-    titleBar:{
+    titleBar: {
         flex: 1,
         justifyContent: 'flex-end'
     },
-    title:{
+    title: {
         fontFamily: commonStyles.fontFamily,
         color: commonStyles.colors.secondary,
         fontSize: 50,
         marginLeft: 20,
         marginBottom: 20
     },
-    subtitle:{
+    subtitle: {
         fontFamily: commonStyles.fontFamily,
         color: commonStyles.colors.secondary,
         fontSize: 20,
         marginLeft: 20,
         marginBottom: 20
     },
-    iconBar:{
+    iconBar: {
         flexDirection: 'row',
         marginHorizontal: 20,
         justifyContent: 'flex-end',
         marginTop: Platform.OS === 'ios' ? 40 : 10
     },
-    addButton:{
+    addButton: {
         position: 'absolute',
         right: 30,
         bottom: 30,
